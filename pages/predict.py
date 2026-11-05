@@ -3,11 +3,12 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from src import charts
 from src.features import LABELS, validate
 from src.loaders import get_model, get_sample
 from src.model import contributions, predict_risk, risk_band, top_reasons
 
-st.title("📡 Churn Radar")
+st.title("Churn Radar")
 st.markdown(
     "**Find the customers most likely to leave this month, see why, "
     "and hand your call team a prioritised list.**"
@@ -16,7 +17,7 @@ with st.expander("How to use"):
     st.markdown(
         "1. Upload this month's customer export (CSV, same columns as the "
         "[sample](https://github.com/IBM/telco-customer-churn-on-icp4d)), or click **Try with sample data**.\n"
-        "2. Review the ranked table — highest risk first.\n"
+        "2. Review the ranked table, highest risk first.\n"
         "3. Pick a customer to see the top reasons and test a retention offer.\n"
         "4. Download the at-risk list."
     )
@@ -50,12 +51,15 @@ if problems:
 
 with st.sidebar:
     st.header("Settings")
-    threshold = st.slider("Call-list threshold (churn risk)", 0.1, 0.9, 0.6, 0.05,
+    threshold = st.slider("Call-list threshold (churn risk)", 0.1, 0.9,
+                          st.session_state.get("call_threshold", 0.6), 0.05,
                           help="Customers at or above this risk go on the download list.")
+    st.session_state.call_threshold = threshold   # widget state is dropped on page change; the About page reads this
+    st.caption("The 'Choosing the threshold' tab on About & limits shows the trade-off.")
 
 # ---- Score -------------------------------------------------------------------
 try:
-    with st.spinner("Scoring customers…"):
+    with st.spinner("Scoring customers..."):
         df["risk"] = predict_risk(bundle, df)
         contrib = contributions(bundle, df)
         df["band"] = [risk_band(p, high=threshold) for p in df["risk"]]
@@ -77,6 +81,7 @@ m4.metric("Monthly revenue at risk", f"${(df['risk'] * df['MonthlyCharges']).sum
 tab_rank, tab_one = st.tabs(["Ranked list", "One customer: why & what-if"])
 
 with tab_rank:
+    st.altair_chart(charts.risk_histogram(df["risk"], threshold), width="stretch")
     st.dataframe(
         df[["customerID", "risk", "band", "top_reason", "Contract", "tenure", "MonthlyCharges"]],
         hide_index=True,
@@ -91,7 +96,7 @@ with tab_rank:
         },
     )
     st.download_button(
-        f"⬇️ Download call list ({len(at_risk):,} customers)",
+        f"Download call list ({len(at_risk):,} customers)",
         at_risk.drop(columns=["band"]).to_csv(index=False),
         "at_risk.csv",
         "text/csv",
@@ -152,6 +157,7 @@ with tab_one:
         a.metric("Risk now", f"{row['risk']:.0%}")
         b.metric("Risk with offer", f"{new_risk:.0%}", f"{(new_risk - row['risk']) * 100:+.0f} pts",
                  delta_color="inverse")
+        st.altair_chart(charts.what_if(row["risk"], new_risk, threshold), width="stretch")
         st.caption(f"Expected monthly revenue kept: ${(row['risk'] - new_risk) * row['MonthlyCharges']:,.2f}. "
                    "This shows how the model responds, not a guaranteed customer reaction. "
                    "Price discounts aren't offered here: in this data, bill size mostly reflects which "

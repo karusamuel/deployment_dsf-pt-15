@@ -7,7 +7,7 @@ from src.features import LABELS
 from src.loaders import get_model, get_sample
 from src.model import contributions, predict_risk
 
-st.title("📊 Explore")
+st.title("Explore")
 st.markdown("See which customer segments carry the most risk, and what drives it overall.")
 
 bundle = get_model()
@@ -23,7 +23,7 @@ except Exception:
     st.stop()
 
 df["tenure_band"] = pd.cut(df["tenure"], [-1, 6, 12, 24, 48, 1000],
-                           labels=["0–6 mo", "7–12 mo", "1–2 yr", "2–4 yr", "4+ yr"])
+                           labels=["0-6 mo", "7-12 mo", "1-2 yr", "2-4 yr", "4+ yr"])
 
 segment = st.selectbox("Compare risk by", ["Contract", "tenure_band", "InternetService", "PaymentMethod",
                                            "TechSupport", "SeniorCitizen"],
