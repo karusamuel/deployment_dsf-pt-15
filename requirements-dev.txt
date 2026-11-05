@@ -1,0 +1,6 @@
+# Extra tools for the training notebook (not needed by the deployed app).
+-r requirements.txt
+jupyterlab
+ipykernel
+matplotlib
+nbconvert

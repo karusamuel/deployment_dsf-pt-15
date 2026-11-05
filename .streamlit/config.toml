@@ -1,0 +1,9 @@
+[theme]
+primaryColor = "#d1495b"
+base = "light"
+
+[server]
+maxUploadSize = 50
+
+[client]
+showErrorDetails = "none"   # users never see a stack trace

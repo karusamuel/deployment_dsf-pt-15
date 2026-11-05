@@ -1,0 +1,8 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+data/raw/
+.streamlit/secrets.toml
+.DS_Store
